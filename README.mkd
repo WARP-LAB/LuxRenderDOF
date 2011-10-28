@@ -3,6 +3,8 @@ LuxBlend DOF calculation addition for v071 and v08RC1
 
 Addition for LuxBlend - DOF calculation for v071 and v08RC1 (Blender 2.49b). As I'm switching to 0.8RC1 (while still staying on 2.49b) added it to v08RC1 exporter version.
 
+![](https://github.com/kroko/LuxRenderDOF/raw/master/screen.jpg)
+
 Calculator is shown if Use Depth of field is selected in Cam/Env tab and Focus type != autofocus
 Although I always use f/ stop to define DOF, calculation retrieves value from lens-radius (luxprop of camera.lensradius). I believe I saw somewhere that DOF calculation inside Lux uses radius parameter. Anyway, this behaviour could be changed to use f/ number if selected.
 
