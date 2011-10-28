@@ -1,0 +1,491 @@
+cameraDofCalculator
+
+
+
+could change luxCamera() to pass cameraDofCalculator object around, but tried to inject/interfere as little as possible 
+
+
+
+
+
+camDofCalculator = cameraDofCalculator(luxAttr(cam, "lens"), luxProp(cam, "camera.lensradius", 0.01))
+
+
+class luxProp:
+    def __init__(self, obj, name, default):
+        self.obj = obj
+        self.name = name
+#        if len(name)>31: print("Warning: property-name \"%s\" has more than 31 chars."%(name))
+        self.hashmode = len(name)>31   # activate hash mode for keynames longer 31 chars (limited by blenders ID-prop)
+        self.hashname = "__hash:%x"%(name.__hash__())
+        self.default = default
+
+computeForm(this.form)
+
+
+function computeForm(form)
+
+{
+
+    if ((form.Focal_Length.value == null || form.Focal_Length.value.length == 0) ||
+
+        (form.F_Number.value == null || form.F_Number.value.length == 0) ||
+
+        (form.Object_Distance.value == null || form.Object_Distance.value.length == 0)) {
+
+        return;
+
+    }
+
+    if (!checkNumber(form.Focal_Length, 15, 1000, "Focal_Length")){
+                form.Focal_Length.value = "Invalid";
+        return;
+        }
+
+    if (!checkNumber(form.F_Number, 1.00, 64, "F_Number")){
+                form.F_Number.value = "Invalid";
+        return;
+        }
+
+    if (!checkNumber(form.Object_Distance, 0, 1000, "Object_Distance")){
+                form.Object_Distance.value = "Invalid";
+        return;
+        }
+
+    var UOM = 1000;
+
+    var focalLength = form.Focal_Length.value;
+
+    if (!form.Unit_ofMeasure.checked){
+
+        focalLength = form.Focal_Length.value * .0394;
+
+        UOM = 12;
+
+    }
+
+// setup the internal values
+
+      var Distance2 = form.Distance_2.value * UOM;
+
+      var Distance3 = form.Distance_3.value * UOM;
+
+      var Distance4 = form.Distance_4.value * UOM;
+
+      var Distance5 = form.Distance_5.value * UOM;
+
+      var Distance6 = form.Distance_6.value * UOM;
+
+      var  fNumber = form.F_Number.value;
+
+      var circleConfusion  = focalLength  / 1720;
+
+        if (form.Film_Format.value == "35") {
+                circleConfusion = .03;
+		} else if (form.Film_Format.value == "1.3x DSLR") {
+                 circleConfusion = .023;
+		} else if (form.Film_Format.value == "1.5x DSLR") {
+                 circleConfusion = .02;
+		} else if (form.Film_Format.value == "1.6x DSLR") {
+                 circleConfusion = .0185;
+		} else if (form.Film_Format.value == "2x DSLR") {
+                 circleConfusion = .015;
+		} else if (form.Film_Format.value == "645") {
+                 circleConfusion = .05;
+		} else if (form.Film_Format.value == "6X6") {
+                  circleConfusion = .06;
+		} else if (form.Film_Format.value == "6X7") {
+                        circleConfusion = .065;
+		} else if (form.Film_Format.value == "6x9") {
+                circleConfusion = .075;
+		} else if (form.Film_Format.value == "4x5") {
+                circleConfusion = .15;
+		} else if (form.Film_Format.value == "5x7") {
+                circleConfusion = .2;
+		} else if (form.Film_Format.value == "8x10") {
+                circleConfusion = .3;
+        }
+
+        if (!form.Unit_ofMeasure.checked){
+
+             circleConfusion = circleConfusion * .0394;
+
+         }
+
+        var objectDistance = form.Object_Distance.value * UOM;
+
+        hyperFocalCalc (focalLength, fNumber, circleConfusion, UOM);
+
+        nearFarDistance(hyperFocal, objectDistance, focalLength, UOM);
+
+        if (!form.Unit_ofMeasure.checked) {
+
+        var Feet_Value =  Math.floor(farDist - nearDist);
+
+        var Inch_Value = ((farDist - nearDist) -        Feet_Value) * UOM;
+
+        form.Depth_Field.value = Feet_Value + "'" + Inch_Value;
+
+        var Feet_Value =  Math.floor(hyperDistance);
+
+        var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+        form.Hyper_Focal.value = Feet_Value + "'" + Inch_Value;
+
+
+        } else { form.Depth_Field.value =  farDist - nearDist;
+
+         form.Hyper_Focal.value = hyperDistance;
+        }
+
+        form.Far_Distance.value  =  farDistance;
+
+       form.Near_Distance.value  =  nearDistance;
+
+        if (farDist <= 0)  {
+
+                form.Depth_Field.value = "inf";
+        }
+
+
+
+// f/5.6
+
+       hyperFocalCalc (focalLength, 5.6, circleConfusion, UOM)
+
+         if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR01.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR01.value = hyperDistance;
+         }
+
+       form.CR02.value = "inf";
+
+       nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+       form.CR11.value  =  nearDistance ;
+
+       form.CR12.value  =  farDistance;
+
+       nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+       form.CR21.value  =  nearDistance ;
+
+       form.CR22.value  =  farDistance;
+
+       nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+       form.CR31.value  =  nearDistance ;
+
+       form.CR32.value  =  farDistance;
+
+       nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+       form.CR41.value  =  nearDistance ;
+
+       form.CR42.value  =  farDistance;
+
+       nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+       form.CR51.value  =  nearDistance ;
+
+       form.CR52.value  =  farDistance;
+
+
+// f/8
+
+        hyperFocalCalc (focalLength, 8.0, circleConfusion, UOM);
+
+        if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR03.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR03.value = hyperDistance;
+         }
+
+
+        form.CR04.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR13.value  =  nearDistance ;
+
+        form.CR14.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR23.value  =  nearDistance ;
+
+        form.CR24.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR33.value  =  nearDistance ;
+
+        form.CR34.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR43.value  =  nearDistance ;
+
+        form.CR44.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR53.value  =  nearDistance ;
+
+        form.CR54.value  =  farDistance;
+
+
+// f/11
+
+        hyperFocalCalc (focalLength, 11.0, circleConfusion, UOM)
+
+        if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR05.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR05.value = hyperDistance;
+         }
+
+        form.CR06.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR15.value  =  nearDistance ;
+
+        form.CR16.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR25.value  =  nearDistance ;
+
+        form.CR26.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR35.value  =  nearDistance ;
+
+        form.CR36.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR45.value  =  nearDistance ;
+
+        form.CR46.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR55.value  =  nearDistance ;
+
+        form.CR56.value  =  farDistance;
+
+
+// f/16
+
+        hyperFocalCalc (focalLength, 16.0, circleConfusion, UOM);
+
+        if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR07.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR07.value = hyperDistance;
+         }
+
+
+        form.CR08.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR17.value  =  nearDistance ;
+
+        form.CR18.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR27.value  =  nearDistance ;
+
+        form.CR28.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR37.value  =  nearDistance ;
+
+        form.CR38.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR47.value  =  nearDistance ;
+
+        form.CR48.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR57.value  =  nearDistance ;
+
+        form.CR58.value  =  farDistance;
+
+
+// f/22
+
+        hyperFocalCalc (focalLength, 22.0, circleConfusion, UOM)
+
+        if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR09.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR09.value = hyperDistance;
+         }
+
+
+        form.CR0A.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR19.value  =  nearDistance ;
+
+        form.CR1A.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR29.value  =  nearDistance ;
+
+        form.CR2A.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR39.value  =  nearDistance ;
+
+        form.CR3A.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR49.value  =  nearDistance ;
+
+        form.CR4A.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR59.value  =  nearDistance ;
+
+        form.CR5A.value  =  farDistance;
+
+
+// f/32
+
+       hyperFocalCalc (focalLength, 32.0, circleConfusion, UOM);
+
+       if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR0B.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR0B.value = hyperDistance;
+         }
+
+        form.CR0C.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR1B.value  =  nearDistance ;
+
+        form.CR1C.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR2B.value  =  nearDistance ;
+
+        form.CR2C.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR3B.value  =  nearDistance ;
+
+        form.CR3C.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR4B.value  =  nearDistance ;
+
+        form.CR4C.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR5B.value  =  nearDistance ;
+
+        form.CR5C.value  =  farDistance;
+
+
+// f/45
+
+        hyperFocalCalc (focalLength, 45.0, circleConfusion, UOM)
+
+        if (!form.Unit_ofMeasure.checked){
+
+              var Feet_Value =  Math.floor(hyperDistance);
+
+                var Inch_Value = (hyperDistance - Feet_Value) * UOM;
+
+                form.CR0D.value = Feet_Value + "'" + Inch_Value;
+
+                } else { form.CR0D.value = hyperDistance;
+         }
+
+        form.CR0E.value = "inf";
+
+        nearFarDistance(hyperFocal, Distance2, focalLength, UOM);
+
+        form.CR1D.value  =  nearDistance ;
+
+        form.CR1E.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance3, focalLength, UOM);
+
+        form.CR2D.value  =  nearDistance ;
+
+        form.CR2E.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance4, focalLength, UOM);
+
+        form.CR3D.value  =  nearDistance ;
+
+        form.CR3E.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance5, focalLength, UOM);
+
+        form.CR4D.value  =  nearDistance ;
+
+        form.CR4E.value  =  farDistance;
+
+        nearFarDistance(hyperFocal, Distance6, focalLength, UOM);
+
+        form.CR5D.value  =  nearDistance ;
+
+        form.CR5E.value  =  farDistance;
+
+
+}
